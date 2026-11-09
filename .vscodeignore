@@ -15,6 +15,7 @@ docs/**
 submodule/**
 build.js
 publish-openvsx.js
+scripts/**
 pnpm-lock.yaml
 pnpm-workspace.yaml
 

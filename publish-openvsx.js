@@ -1,29 +1,18 @@
 /* eslint-disable */
+import { execFileSync } from "node:child_process"
+import { readFileSync } from "node:fs"
+import { fileURLToPath } from "node:url"
 
-import { execSync } from "node:child_process"
-import path, { dirname } from "node:path"
-import { fileURLToPath, URL } from "node:url"
-import { createRequire } from "module"
-const require = createRequire(import.meta.url)
-const packageJson = require("./package.json")
-
-// Ensure environment variables are checked properly
+const packageJson = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"))
 if (!process.env.OPEN_VSX_TOKEN) {
 	throw new Error("OPEN_VSX_TOKEN is not defined.")
 }
+const vsixFileName = `vs-code-extension-${packageJson.version}.vsix`
+const vsixFilePath = fileURLToPath(new URL(vsixFileName, import.meta.url))
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const version = packageJson.version
-const vsixFileName = `vs-code-extension-${version}.vsix`
-const vsixFilePath = path.join(__dirname, vsixFileName)
-const token = process.env.OPEN_VSX_TOKEN
-
-try {
-	const command = `npx ovsx publish "${vsixFilePath}" -p ${token}`
-	console.log(`Executing: ${command}`)
-	execSync(command, { stdio: "inherit" })
-	console.log(`Successfully published ${vsixFileName} to Open VSX Registry.`)
-} catch (error) {
-	console.error(`Failed to publish to Open VSX: ${error.message}`)
-	process.exit(1)
-}
+// Pass the existing token through the environment, never command arguments or logs.
+execFileSync("pnpm", ["exec", "ovsx", "publish", vsixFilePath], {
+	stdio: "inherit",
+	env: { ...process.env, OVSX_PAT: process.env.OPEN_VSX_TOKEN },
+})
+console.log(`Successfully published ${vsixFileName} to Open VSX Registry.`)
