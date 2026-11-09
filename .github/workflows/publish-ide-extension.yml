@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       publish:
-        description: Publish the packaged version (false verifies Marketplace authentication without publishing)
+        description: Publish the packaged version (false verifies both registries without publishing)
         type: boolean
         default: false
   push:
@@ -48,8 +48,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify Marketplace trusted publishing without publishing
-        run: node scripts/verify-marketplace-publishing.mjs
+      - name: Verify registry trusted publishing without publishing
+        run: node scripts/verify-publishing.mjs
 
       - name: Build
         run: pnpm run build
@@ -64,10 +64,6 @@ jobs:
         if: github.event_name == 'push' || inputs.publish
         run: pnpm exec vsce publish --oidc --packagePath "vs-code-extension-$(node -p 'require("./package.json").version').vsix"
 
-      # Open VSX ownership and its buyer Publisher Agreement are still pending.
-      # Keep its existing publishing path until that separate migration is complete.
       - name: Publish to Open VSX Registry
         if: github.event_name == 'push' || inputs.publish
         run: pnpm run publish:open-vsx
-        env:
-          OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
